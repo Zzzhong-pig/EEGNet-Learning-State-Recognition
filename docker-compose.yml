@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      EEG_MIXED_ENSEMBLE_MANIFEST: artifacts/production/manifest.json
+      EEG_REQUIRE_MODEL: "true"
+      EEG_VERIFY_ARTIFACTS: "true"
+      EEG_MAX_CONCURRENT_INFERENCES: "1"

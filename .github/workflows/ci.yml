@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Generate synthetic data
+        run: python scripts/generate_synthetic_data.py --samples 192
+      - name: Preprocess
+        run: python preprocess.py --input data/X_features.npy --output data/X_filtered.npy
+      - name: Unit tests
+        run: pytest -q
+      - name: Smoke train
+        run: python train.py --config configs/eegnet.yaml --epochs 2 --output artifacts/ci_smoke

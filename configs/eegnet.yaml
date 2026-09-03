@@ -1,0 +1,37 @@
+data: data/X_filtered.npy
+labels: data/y_labels.npy
+output: artifacts/production/eegnet
+folds: 5
+val_ratio: 0.15
+epochs: 150
+batch_size: 32
+seed: 42
+learning_rate: 0.0008
+label_smoothing: 0.03
+mixup_alpha: 0.10
+early_stopping_patience: 22
+reduce_lr_patience: 7
+loss: crossentropy
+oversample: false
+minority_boost: false
+class_weight_power: 1.2
+calibrate: true
+checkpoint_metric: val_macro_f1
+protocol_note: sample-level stratified cross-validation
+
+filter:
+  fs: 250.0
+  low: 4.0
+  high: 40.0
+  notch: 50.0
+
+model:
+  f1: 16
+  d: 2
+  f2: 32
+  kern_length: 125
+  dropout_rate: 0.45
+  se_ratio: 4
+  dense_units: 48
+  dense_dropout: 0.25
+  weight_decay: 0.0001

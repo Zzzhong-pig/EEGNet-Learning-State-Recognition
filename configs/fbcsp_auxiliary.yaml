@@ -1,0 +1,28 @@
+data: data/X_filtered.npy
+labels: data/y_labels.npy
+output: artifacts/production/fbcsp
+folds: 5
+repeats: 1
+split_mode: sample
+val_ratio: 0.15
+epochs: 1
+batch_size: 32
+seed: 42
+learning_rate: 0.001
+label_smoothing: 0.0
+mixup_alpha: 0.0
+early_stopping_patience: 1
+reduce_lr_patience: 1
+loss: crossentropy
+class_weight_power: 1.0
+calibrate: true
+checkpoint_metric: val_loss
+selection_metric: accuracy
+bootstrap_iterations: 1000
+protocol_note: sample-level stratified cross-validation; use group IDs for enterprise acceptance
+
+filter:
+  fs: 250.0
+  low: 4.0
+  high: 40.0
+  notch: 50.0

@@ -1,0 +1,78 @@
+{
+  "schema_version": "2.0",
+  "created_at": "2026-07-26T05:44:05.520098+00:00",
+  "strategy": "oof_cross_fitted_ensemble",
+  "artifact_dirs": [
+    "artifacts/production/eegnet"
+  ],
+  "members": [
+    {
+      "artifact_dir": "artifacts/production/eegnet",
+      "group_index": 0,
+      "model": "artifacts/production/eegnet/fold_1.keras",
+      "model_sha256": "d44db7172636398db4371022ca126a9c1ee470d33b3a67bcb47f35bea87ff9dc",
+      "preprocessing": "artifacts/production/eegnet/fold_1_preprocessing.npz",
+      "preprocessing_sha256": "ac1cc4e3d0152ea70637d80bc6dd9e2a1a9685f16aafbb25ee3ff4a3eb6ce124"
+    },
+    {
+      "artifact_dir": "artifacts/production/eegnet",
+      "group_index": 0,
+      "model": "artifacts/production/eegnet/fold_2.keras",
+      "model_sha256": "e45f92486b668a9c3607f572cf1bfe2157f764a86f38c798ae686ae2f37c92e9",
+      "preprocessing": "artifacts/production/eegnet/fold_2_preprocessing.npz",
+      "preprocessing_sha256": "5dbc7601c90c9a3714d74a3afd4abfecea4e6e15e33fc4b3dc7fb55cae67090a"
+    },
+    {
+      "artifact_dir": "artifacts/production/eegnet",
+      "group_index": 0,
+      "model": "artifacts/production/eegnet/fold_3.keras",
+      "model_sha256": "eee4d8c2d33ed82e2a2534cbc565e7d05fe19f5ffd4c8d629c180a99ab06a29a",
+      "preprocessing": "artifacts/production/eegnet/fold_3_preprocessing.npz",
+      "preprocessing_sha256": "41785c2224887e4c485fb2aff61dfa2931099f6ca06f3f74dc40ac164ab66978"
+    },
+    {
+      "artifact_dir": "artifacts/production/eegnet",
+      "group_index": 0,
+      "model": "artifacts/production/eegnet/fold_4.keras",
+      "model_sha256": "2afeccc4dd28f70adf7dc635482de6f1285b1fd79e7a3bb8aa08fa3212c271df",
+      "preprocessing": "artifacts/production/eegnet/fold_4_preprocessing.npz",
+      "preprocessing_sha256": "98c6b02b51b39794c5bee004ea9068026c359a0d97f1ad3251289889247fab6f"
+    },
+    {
+      "artifact_dir": "artifacts/production/eegnet",
+      "group_index": 0,
+      "model": "artifacts/production/eegnet/fold_5.keras",
+      "model_sha256": "20a7460ae0c9cb925c289cf3dc7eeb4ea5accbd7f87b7f855f55f0757a26b40e",
+      "preprocessing": "artifacts/production/eegnet/fold_5_preprocessing.npz",
+      "preprocessing_sha256": "119fd556ad87c6563c4872999fd13cc1423fd38310ea337d5bbf777041f27a65"
+    }
+  ],
+  "ensemble_size": 5,
+  "method": "mean",
+  "selection_metric": "accuracy",
+  "classes": [
+    0,
+    1,
+    2
+  ],
+  "model_weights": [
+    0.20000000298023224,
+    0.20000000298023224,
+    0.20000000298023224,
+    0.20000000298023224,
+    0.20000000298023224
+  ],
+  "class_multipliers": [
+    1.5,
+    2.0,
+    0.800000011920929
+  ],
+  "temperature": 1.7266135308584254,
+  "oof_negative_log_likelihood": 1.064773440361023,
+  "oof_cross_fitted_metrics": {
+    "accuracy": 0.6983729662077597,
+    "balanced_accuracy": 0.4595275161321859,
+    "macro_f1": 0.45582970505628256
+  },
+  "data_samples": 3196
+}

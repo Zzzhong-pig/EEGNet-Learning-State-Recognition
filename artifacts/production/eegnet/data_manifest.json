@@ -1,0 +1,10 @@
+{
+  "data_checksum": "709ff45233144184025ef6255f0d03e801a641f7daa0b3b01da1e66e654beb3f",
+  "labels_checksum": "dc01995ed65a5fae73fe170559e9a726076d3e8f2f66fe4b2f9c6ab0b92c8501",
+  "samples": 3196,
+  "class_distribution": {
+    "0": 784,
+    "1": 2019,
+    "2": 393
+  }
+}

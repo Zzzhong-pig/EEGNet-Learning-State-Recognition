@@ -1,0 +1,19 @@
+{
+  "protocol": "five-fold sample-level OOF with a second-level cross-fitted fusion policy",
+  "data_samples": 3196,
+  "selected_artifact": "artifacts/production/manifest.json",
+  "selected_members": "five-fold EEGNet ensemble plus one FBCSP auxiliary classifier",
+  "selection_metric": "accuracy",
+  "metrics": {
+    "accuracy": 0.8210262828535669,
+    "balanced_accuracy": 0.6906540829225233,
+    "macro_f1": 0.7273185723762531
+  },
+  "fusion": {
+    "eegnet_weight": 0.225,
+    "fbcsp_weight": 0.775,
+    "meta_folds": 5,
+    "meta_seed": 2026
+  },
+  "acceptance_note": "Sample-level result only. Group-level validation with subject or session IDs is required before enterprise acceptance."
+}

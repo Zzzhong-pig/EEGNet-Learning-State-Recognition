@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "runtime": "hybrid_eegnet_fbcsp",
+  "created_at": "2026-07-26T09:08:28.769637+00:00",
+  "method": "probability_fusion",
+  "selection_metric": "accuracy",
+  "classes": [
+    0,
+    1,
+    2
+  ],
+  "input_shape": [
+    5,
+    1000
+  ],
+  "ensemble_size": 6,
+  "eegnet_manifest": "artifacts/production/eegnet_ensemble/manifest.json",
+  "eegnet_manifest_sha256": "9796e5cedb9c1116bbb0d737d3cca60fb6f2f60a263c5a3ec348b298f4625134",
+  "fbcsp_manifest": "artifacts/production/fbcsp/manifest.json",
+  "fbcsp_manifest_sha256": "6ccc1ea5a790e8590b5ec4f87b7fe702b88d66c2e2bb741f4f001e8fee08f9a9",
+  "eegnet_weight": 0.225,
+  "fbcsp_weight": 0.775,
+  "temperature": 0.47628198350041284,
+  "class_multipliers": [
+    1.5,
+    0.800000011920929,
+    1.5
+  ],
+  "negative_log_likelihood": 0.4827810525894165,
+  "oof_full_policy_metrics": {
+    "accuracy": 0.8263454317897372,
+    "balanced_accuracy": 0.6985650522662324,
+    "macro_f1": 0.7349156961014837
+  },
+  "oof_cross_fitted_metrics": {
+    "accuracy": 0.8210262828535669,
+    "balanced_accuracy": 0.6906540829225233,
+    "macro_f1": 0.7273185723762531
+  },
+  "oof_cross_fitted_confidence_intervals": {
+    "accuracy": {
+      "lower": 0.8075719649561952,
+      "upper": 0.8338548185231539
+    },
+    "balanced_accuracy": {
+      "lower": 0.670392298810101,
+      "upper": 0.7087210883809574
+    },
+    "macro_f1": {
+      "lower": 0.7063911469656842,
+      "upper": 0.7461886880099078
+    }
+  },
+  "meta_validation": {
+    "folds": 5,
+    "seed": 2026,
+    "eegnet_weights_per_meta_fold": [
+      0.225,
+      0.17500000000000002,
+      0.17500000000000002,
+      0.225,
+      0.07500000000000001
+    ],
+    "description": "Each held-out meta fold selected fusion weight, temperature, and class multipliers from its development rows only."
+  },
+  "acceptance_note": "Sample-level OOF only. Enterprise acceptance requires subject/session group IDs and group-level validation."
+}
