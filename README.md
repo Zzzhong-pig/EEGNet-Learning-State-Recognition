@@ -1,42 +1,62 @@
-# EEGNet EEG 学习状态识别系统
+# EEG 学习状态识别系统
+> 将 5 通道 EEG 信号转换为学习状态预测的端到端项目。项目覆盖信号处理、模型训练、可靠性评估和在线部署，最终以 FastAPI + Docker 形式提供推理服务。
 
-这是一个面向实时部署的 EEG 三分类项目。系统从 5 通道、4 秒窗口的 EEG 信号中识别 3 类学习状态，核心神经网络基于 EEGNet，并配套严格的数据预处理、交叉验证、概率校准、模型完整性校验和 FastAPI 服务。
+## 项目概述
 
-## 项目概览：STAR
+真实 EEG 数据通常同时存在三个问题：类别分布不均衡、相邻窗口相互相关，以及离线训练和线上推理容易使用不同的预处理流程。单纯追求一个更高的准确率，不能说明模型能够稳定交付。
 
-### Situation：问题背景
+围绕这个问题，我把项目推进成了一条完整链路：统一原始信号处理与推理输入，使用轻量 EEGNet 建立主模型，再加入 FBCSP + ExtraTrees 辅助分支捕捉互补特征；通过 OOF（Out-of-Fold）和二级交叉拟合评估融合策略，最后将模型、校准参数和完整性校验信息打包为唯一生产清单。
 
-原始数据形状为 `[N, 5, 1000]`，采样率为 250 Hz，共 3,196 个样本、3 个类别。类别分布不均衡，少数类更难识别；同时，EEG 相邻窗口具有相关性，随机切分很容易把同一段采集数据同时放进训练集和测试集，造成指标虚高。
+**项目亮点**
 
-### Task：交付目标
+- **从实验到服务**：不是只提交一个训练脚本，而是交付可复现的训练流水线、模型制品、API 和 Docker 配置。
+- **评估口径清晰**：二级评估中的融合策略、温度和类别倍率只在开发行拟合，避免把调参结果误报成测试成绩。
+- **工程风险可控**：启动时校验模型 SHA-256，接口具备输入校验、API Key、并发限制、请求日志和 Prometheus 指标。
 
-- 保持 EEGNet 作为核心神经网络，完成端到端训练和推理。
-- 将训练、验证、校准、推理和部署使用的预处理严格对齐。
-- 提供可复现的 OOF 评估，避免把调参结果误报为测试成绩。
-- 提供企业服务需要的模型清单、SHA-256 完整性校验、限流、日志和 Docker 配置。
+## 当前结果
 
-### Action：实现方案
-
-1. **信号处理**：4-40 Hz 零相位带通和 50 Hz 陷波；每个训练折单独计算归一化统计量，推理时只读取对应折的统计量。
-2. **EEGNet 主干**：使用长时间卷积核、深度可分离卷积、SE 通道注意力、紧凑分类头和类别校准，保留轻量网络特性。
-3. **辅助信息融合**：使用 FBCSP + ExtraTrees 作为显式辅助分支，和 EEGNet 概率在二级 OOF 验证中融合。它被明确标记为辅助模型，不会被称作纯 EEGNet。
-4. **防泄漏评估**：外层 OOF 产生未见样本概率，二级策略只在开发行拟合融合权重、温度和类别倍率，再在元验证折上评估。
-5. **企业部署**：默认清单为 `artifacts/production/manifest.json`；FastAPI 接收原始 EEG，自动执行滤波、归一化、融合和预测；启动时校验模型和清单哈希。
-
-### Result：当前结果
-
-当前生产清单在样本级五折二级 OOF 评估中的结果：
+生产清单对应的是 **5 折样本级二级 OOF 评估**，不是跨受试者测试。结果属于 EEGNet 与 FBCSP 辅助分支的融合方案，不将融合成绩归因于单一模型。
 
 | 指标 | 结果 |
 | --- | ---: |
 | 准确率 | **82.10%** |
-| 准确率 95% bootstrap 区间 | 80.76%-83.39% |
+| 准确率 95% Bootstrap 区间 | **80.76% - 83.39%** |
 | 平衡准确率 | 69.07% |
 | Macro-F1 | 72.73% |
-| EEGNet 概率权重 | 22.5% |
-| 辅助分支概率权重 | 77.5% |
+| 融合权重 | EEGNet 22.5% / FBCSP 77.5% |
 
-这些是样本级 OOF 结果，不是跨受试者结果。当前数据没有提供受试者或会话 ID，因此不能据此宣称对新受试者达到 90%。纯 EEGNet 目前也没有经过严格验证的 80% 以上结果；如需企业验收，必须补充 `subject_id`/`session_id` 后运行 group-level 验证。
+数据规模为 3,196 个样本、3 个类别，每条样本包含 5 通道、1,000 个采样点（250 Hz，即 4 秒窗口）。由于当前数据没有 `subject_id` 或 `session_id`，结果只能说明窗口级识别能力，不能直接宣称对新受试者的泛化效果。企业验收前应补充分组信息，并运行 group-level 交叉验证。
+
+## 核心工作
+
+### 1. 统一信号处理，保证训练和推理一致
+
+- 对原始 EEG 执行 4-40 Hz 零相位带通滤波和 50 Hz 陷波滤波。
+- 每个训练折只用训练数据计算归一化均值和标准差，验证、测试和线上推理只读取已保存的统计量。
+- 将滤波参数、输入形状、类别顺序和归一化信息随模型一起写入预处理制品，避免部署后出现隐性分布偏移。
+
+### 2. 用互补模型处理类别不均衡和信号差异
+
+- EEGNet 主干使用时间卷积、空间深度卷积、可分离卷积和 SE 通道注意力，在保持轻量的同时提取时空特征。
+- FBCSP + ExtraTrees 作为显式辅助分支，从多个频带提取 CSP 特征，补充传统频域/空间判别信息。
+- 在未见样本概率上学习融合权重、温度参数和类别倍率，并保留各分支的独立结果，便于定位问题和解释模型行为。
+
+### 3. 用 OOF 和二级交叉拟合约束评估偏差
+
+- 外层五折交叉验证为每个样本生成未见过该样本的预测概率。
+- 二级融合再次划分开发行与元验证折，只在开发行拟合策略，再对元验证折评估。
+- 同时报告 Accuracy、Balanced Accuracy、Macro-F1 和 Bootstrap 置信区间，不只看总体准确率。
+
+### 4. 将模型包装成可上线的推理服务
+
+- FastAPI 接收原始 `[N, 5, 1000]` EEG，自动执行滤波、归一化、模型融合和概率校准。
+- 提供 `/live`、`/health`、`/ready`、`/metadata`、`/predict` 和 `/metrics` 接口。
+- 支持 API Key、批大小和并发上限、请求 ID、结构化日志，以及模型制品 SHA-256 完整性校验。
+- 使用 `artifacts/production/manifest.json` 作为唯一发布入口，避免线上直接引用某个折模型。
+
+## 技术栈
+
+`Python 3.11` · `TensorFlow/Keras` · `SciPy` · `scikit-learn` · `FastAPI` · `Docker` · `pytest`
 
 ## 快速开始
 
@@ -46,28 +66,35 @@
 python -m pip install -r requirements.txt
 ```
 
-### 使用现有生产模型启动服务
+### 启动现有生产模型
+
+仓库已包含 `artifacts/production/manifest.json` 及其引用的模型制品，可直接启动服务：
 
 ```powershell
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-检查服务：
+检查服务状态：
 
 ```powershell
 Invoke-RestMethod http://localhost:8000/health
 Invoke-RestMethod http://localhost:8000/metadata
 ```
 
-### 从数据重新构建生产模型
+### 重新训练并生成生产清单
 
-以下命令会依次训练 EEGNet、生成 EEGNet 集成清单、训练辅助分支并生成最终融合清单：
+准备好以下数据文件后运行完整流水线：
+
+```text
+data/X_features.npy    # 原始 EEG，形状 [N, 5, 1000]
+data/y_labels.npy      # 与样本一一对应的标签
+```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/run_production_pipeline.ps1
 ```
 
-最终部署入口固定为：
+流水线会依次完成预处理、EEGNet 五折训练、OOF 集成、FBCSP 辅助分支训练和二级概率融合。最终部署入口固定为：
 
 ```text
 artifacts/production/manifest.json
@@ -79,75 +106,58 @@ artifacts/production/manifest.json
 docker compose up --build
 ```
 
-可通过 `.env` 配置 `EEG_API_KEY`、`EEG_MAX_BATCH_SIZE`、`EEG_MAX_CONCURRENT_INFERENCES` 和 `EEG_VERIFY_ARTIFACTS`。
+生产环境可通过 `.env` 配置 `EEG_API_KEY`、`EEG_MAX_BATCH_SIZE`、`EEG_MAX_CONCURRENT_INFERENCES` 和 `EEG_VERIFY_ARTIFACTS`。
 
-## API
+## API 示例
 
-请求 `POST /predict` 的格式为：
+`POST /predict` 接收一个或多个 EEG 窗口：
 
 ```json
 {
-  "samples": [[[0.0, 0.0]]]
+  "samples": [
+    [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0]
+    ]
+  ]
 }
 ```
 
-实际请求必须是 `[N, 5, 1000]`。服务返回类别、原始概率、校准概率和置信度。生产环境建议设置 `EEG_API_KEY`，并使用请求 ID 关联日志。
+示例仅展示 JSON 层级；实际请求必须使用 `[N, 5, 1000]`。服务返回预测类别、原始概率、校准概率、置信度和请求延迟。设置 `EEG_API_KEY` 后，请在请求头中携带 `X-API-Key`。
 
 ## 目录结构
 
 ```text
 EEG_Project/
-├── api.py                         # FastAPI 服务
-├── inference.py                   # EEGNet、辅助模型和融合推理
-├── train.py                       # EEGNet 五折训练
-├── preprocess.py                  # EEG 预处理
-├── tflite_quantize.py             # EEGNet 边缘导出
-├── test_pipeline.py               # 自动化测试
+├── api.py                         # FastAPI 推理服务
+├── inference.py                   # 单模型、集成和融合推理
+├── preprocess.py                  # EEG 滤波与数据校验
+├── train.py                       # EEGNet 交叉验证训练
+├── tflite_quantize.py             # EEGNet 边缘端导出
 ├── arl_eegmodels/                 # EEGNet 网络定义
-├── eeg_project/                   # 配置、训练、校准、指标和特征模块
-├── configs/
-│   ├── eegnet.yaml                # EEGNet 主配置
-│   └── fbcsp_auxiliary.yaml       # 辅助分支配置
-├── scripts/
-│   ├── run_production_pipeline.ps1
-│   ├── build_mixed_ensemble.py
-│   ├── build_eegnet_fbcsp_hybrid.py
-│   └── train_fbcsp.py
-├── artifacts/production/          # 唯一发布模型目录
-└── docs/                          # 运维说明和项目材料
+├── eeg_project/                   # 训练、特征、校准、指标和清单模块
+├── configs/                       # EEGNet 与 FBCSP 配置
+├── scripts/                       # 生产训练、融合和发布脚本
+├── artifacts/production/          # 可发布模型及唯一 manifest
+├── docs/OPERATIONS.md             # 运维与验收说明
+└── test_pipeline.py               # 自动化测试
 ```
 
-## 数据与验收要求
+## 验证与发布边界
 
-生产验收应为 group-level 交叉验证，而不是随机样本切分。建议数据文件额外提供：
-
-```text
-data/subject_ids.npy
-data/session_ids.npy
-```
-
-然后在配置中指定：
-
-```yaml
-groups: data/subject_ids.npy
-split_mode: group
-repeats: 3
-selection_metric: macro_f1
-```
-
-只有当多个独立 group-level 测试中准确率稳定达到目标，并且少数类召回率、Macro-F1 和置信区间同时满足要求时，才应将模型用于客户验收。窗口级准确率达到目标，不代表跨受试者泛化达到目标。
-
-## 测试
+运行自动化测试：
 
 ```powershell
 python -m pytest -q
 ```
 
-当前代码包含配置校验、滤波一致性、归一化隔离、OOF 融合、API 健康检查和推理预处理测试。
+测试覆盖配置校验、滤波一致性、训练统计量隔离、OOF 覆盖、融合策略、模型输入校验和 API 健康检查。
 
-## 发布原则
+发布时遵循以下原则：
 
-- 只从 `artifacts/production/manifest.json` 加载默认模型。
-- `EEG_VERIFY_ARTIFACTS=true` 时，模型哈希不匹配会阻止服务启动。
-- 不把开发集调参结果写成测试结果。
-- 不在没有 group ID 的情况下宣称跨受试者准确率。
+- 默认只从 `artifacts/production/manifest.json` 加载模型。
+- `EEG_VERIFY_ARTIFACTS=true` 时，任一模型或预处理文件哈希不匹配都会阻止服务启动。
+- 样本级 OOF 结果用于研发比较；客户验收必须提供受试者或会话分组，并报告 group-level 指标。
+- 任何跨受试者准确率或更高业务目标，都需要在锁定的独立测试协议上重新验证。
+
+更详细的运维命令和验收配置见 [`docs/OPERATIONS.md`](docs/OPERATIONS.md)。
